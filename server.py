@@ -54,6 +54,15 @@ def run_server():
                 # to send the data to each of the connected clients.
                 data = sock.recv(1024).decode()
 
+                # checking for input commands
+                words = data.split()
+                if(words[0].upper() == '/HELP'):
+                    data = "...A HELP MESSAGE..."
+                if(words[0].upper() == '/NICK'):
+                    data = "...A NICK MESSAGE..."
+                if(words[0].upper() == '/WHO'):
+                    data = "...A WHO MESSAGE..."
+
                 # format a message
                 msg = ("%s" % (str(data)))
                 # send the message to all connected clients except the sender
