@@ -10,7 +10,7 @@ def run_client():
     """
     # Specify where the server is to connect to
     server_address = '127.0.0.1'
-    port = 5010
+    port = 5000
     
     # Create a socket and connect to the server
     client_socket = socket.socket()
@@ -34,7 +34,7 @@ def run_client():
                 msg = sock.recv(1024).decode()
                 # if the recieved message is not nothing, print it for the user
                 if(len(msg) > 0):
-                	print("RECV: %s" % (str(msg)))               
+                	print("%s" % (str(msg)))               
             else:
                 # The user entered a message
                 msg = sys.stdin.readline()
@@ -43,7 +43,7 @@ def run_client():
                 # Send the message to the server
                 client_socket.send(msg.encode())
                 # print a log of the sent message
-                print("SENT: %s" % (str(msg)))   
+                print("**YOU**: %s" % (str(msg)))   
 
         
 # main metod will start running the chat client
