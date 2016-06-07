@@ -68,18 +68,22 @@ def run_server():
                 # checking for input commands
                 words = data.split()
                 first_word = words[0].upper()
+                message = ""
                 # checking a second input word exists
-                if(len(words) != 2):
+                if(len(words) < 2):
                     second_word = None
                 else:
                     second_word = words[1]
+                    # record the message
+                    for word in words[2:]:
+                        message += word
 
                 # CHECKING FOR INPUT COMMANDS
                 # Help command will return a simple help message
                 if(str(first_word) == "/HELP"):
                     help_msg = ("welcome to the python chat system, simply type " +
                                  "and send messages to the chat " + "room and see the responces" +
-                                  "\n commands; /Help, /Who, /Nick <name>")
+                                  "\n commands; /Help, /Who, /Nick <name>, /MSG <recipient_nickname>")
                     # send message back to client and break
                     sock.send(help_msg.encode())
                     break
@@ -91,6 +95,30 @@ def run_server():
                     # sock.close()
                     print("socket: " + str(name) + " disconnected by client")
                     break
+                # Msg command is used for private messaging other users
+                if(str(first_word) == "/MSG"):
+                    priv_msg = ""
+                    if(second_word == None):
+                        # error message if name parameter not present
+                        priv_msg = ("command must be in format: /MSG <recipient_nickname> message... ")
+                    else:
+                        if(second_word not in nicknames.values()):
+                            priv_msg = ("recipient_nickname entered does not exit on server")
+                        else:
+                            priv_port = 0
+                            #find the port of the message recipient
+                            for key in nicknames:
+                                # nickname matches entered name
+                                if(str(nicknames[key]) == str(second_word)):
+                                    priv_port = key
+                            for soc in socket_list:
+                                if(soc != socket_list[0] and soc != sock):
+                                    # only send the message to the recipient
+                                    if(soc.getpeername()[1] == priv_port):
+                                        soc.send(message.encode())
+                    # send a confirm message back to the client then break
+                    sock.send(priv_msg.encode())
+                    break
                 # Who command returns a list of all connected clients
                 if(str(first_word) == "/WHO"):
                     who_msg = "all users: "
@@ -99,7 +127,7 @@ def run_server():
                     for key, val in nicknames.items():
                         if(val is not None):
                             # add nick names to message
-                            who_msg += val
+                            who_msg += (val + " ")
                         else:
                             # count unnamed users
                             count += 1
@@ -119,7 +147,7 @@ def run_server():
                         sock_id = sock.getpeername()[1]
                         # update nicknames to include users nickname
                         nicknames.update({ sock_id : second_word })
-                        nick_msg = ("Nickname set as : %s " % (second_word))
+                        nick_msg = ("Nickname set to %s " % (second_word))
                     # send message back to client and break
                     sock.send(nick_msg.encode())
                     break
