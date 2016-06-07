@@ -26,11 +26,12 @@ def run_server():
     # Add the server socket to this list
     socket_list.append(server_socket)
 
-    # create nickname dictionary of sockets to nicknames
+    # create nickname dictionary of sockets to user nicknames
     nicknames = {}
 
 
     print("Server running on port: %i" % (port))
+
     # Start listening for input from both the server socket and the clients
     while True:
 
@@ -64,11 +65,11 @@ def run_server():
 
                 # format a message
                 msg = ("%s" % (str(data)))
+                message = ""
 
                 # checking for input commands
                 words = data.split()
                 first_word = words[0].upper()
-                message = ""
                 # checking a second input word exists
                 if(len(words) < 2):
                     second_word = None
@@ -82,7 +83,7 @@ def run_server():
                 # Help command will return a simple help message
                 if(str(first_word) == "/HELP"):
                     help_msg = ("SERVER: welcome to the python chat system, simply type " +
-                                 "and send messages to the chat " + "room and see the responces" +
+                                 "and send messages to the chat room and see the responces" +
                                   "\n commands; /Help, /Who, /Nick <name>, /MSG <recipient_nickname>")
                     # send message back to client and break
                     sock.send(help_msg.encode())
@@ -99,10 +100,11 @@ def run_server():
                 if(str(first_word) == "/MSG"):
                     priv_msg = ""
                     if(second_word == None):
-                        # error message if name parameter not present
+                        # error message if name parameter not present/entered
                         priv_msg = ("SERVER: command must be in format: /MSG <recipient_nickname> message... ")
                     else:
                         if(second_word not in nicknames.values()):
+                            # error message if the nickname cant be found
                             priv_msg = ("SERVER: recipient_nickname entered does not exit on server")
                         else:
                             priv_port = 0
@@ -111,10 +113,13 @@ def run_server():
                                 # nickname matches entered name
                                 if(str(nicknames[key]) == str(second_word)):
                                     priv_port = key
+                            #find the recipient socket
                             for soc in socket_list:
+                                # dont sent to server_socket
                                 if(soc != socket_list[0]):
                                     # only send the message to the recipient
                                     if(soc.getpeername()[1] == priv_port):
+                                        # format the private message
                                         name = nicknames[priv_port]
                                         message = ("Private message from %s: %s" % (name, message))
                                         soc.send(message.encode())
@@ -145,7 +150,7 @@ def run_server():
                         # error message if name parameter not present
                         nick_msg = ("SERVER: command must be in format: /NICK <nickname> ... ")
                     else:
-                        # get user socket
+                        # get user socket port
                         sock_id = sock.getpeername()[1]
                         # update nicknames to include users nickname
                         nicknames.update({ sock_id : second_word })
@@ -154,7 +159,7 @@ def run_server():
                     sock.send(nick_msg.encode())
                     break
 
-                # adding users nickname to outgoing message
+                # adding user nickname to outgoing message
                 for key, val in nicknames.items():
                     if key == sock.getpeername()[1]:
                         if(val is not None):
