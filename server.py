@@ -54,17 +54,19 @@ def run_server():
                 # to send the data to each of the connected clients.
                 data = sock.recv(1024).decode()
 
-                # checking for input commands
-                words = data.split()
-                if(words[0].upper() == '/HELP'):
-                    data = "...A HELP MESSAGE..."
-                if(words[0].upper() == '/NICK'):
-                    data = "...A NICK MESSAGE..."
-                if(words[0].upper() == '/WHO'):
-                    data = "...A WHO MESSAGE..."
+                print("%s sent msg : %s" % (sock.getpeername()[1], data))
 
                 # format a message
                 msg = ("%s" % (str(data)))
+
+                # checking for input commands
+                words = data.split()
+                first_word = words[0].upper()
+
+                # checking for input commands
+                if(str(first_word) == "/HELP"):
+                    sock.send("HELP MESSAGE".encode())
+
                 # send the message to all connected clients except the sender
                 for res_soc in socket_list:
                 	if(res_soc != socket_list[0] and res_soc != sock):
