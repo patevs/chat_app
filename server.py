@@ -26,6 +26,9 @@ def run_server():
     # Add the server socket to this list
     socket_list.append(server_socket)
 
+    # create nickname dictionary of sockets to nicknames
+    nicknames = {}
+
 
     print("Server running on port: %i" % (port))
     # Start listening for input from both the server socket and the clients
@@ -42,6 +45,7 @@ def run_server():
                 sockfd, addr = server_socket.accept()
                 # Add the socket to the list of sockets to monitor
                 socket_list.append(sockfd)
+                nicknames.update({sockfd.getpeername()[1] : None})
                 # Log what has happened on the server
                 print ("Client (%s, %s) connected" % (addr[0], addr[1]))
                 # send back a welcome message
@@ -70,12 +74,13 @@ def run_server():
                 else:
                     second_word = words[1]
 
-                # checking for input commands
-                # Help command will return a help message
+                # CHECKING FOR INPUT COMMANDS
+                # Help command will return a simple help message
                 if(str(first_word) == "/HELP"):
                     help_msg = ("welcome to the python chat system, simply type " +
                                  "and send messages to the chat " + "room and see the responces" +
-                                  "\n commands; /Help, /Who , /Nick")
+                                  "\n commands; /Help, /Who, /Nick <name>")
+                    # send message back to client and break
                     sock.send(help_msg.encode())
                     break
                 # Exit command will disconnect the client
@@ -88,24 +93,47 @@ def run_server():
                     break
                 # Who command returns a list of all connected clients
                 if(str(first_word) == "/WHO"):
-                    sock.send("ALL USERS: ".encode())
-                    # TO-DO: responds with a list of connected clients w/ nick
+                    who_msg = "all users: "
+                    count = 0
+                    # iterate over all nicknames in server
+                    for key, val in nicknames.items():
+                        if(val is not None):
+                            # add nick names to message
+                            who_msg += val
+                        else:
+                            # count unnamed users
+                            count += 1
+                    if(count > 0):
+                        who_msg += (": %i unnamed user(s) " % (count))
+                    # send message back to client and break
+                    sock.send(who_msg.encode())
                     break
                 # Nick command is used for setting a clients nickname on the server
                 if(str(first_word) == "/NICK"):
+                    nick_msg = ""
                     if(second_word == None):
-                        sock.send("command must be in format: /NICK 'nickname' ... ".encode())
+                        # error message if name parameter not present
+                        nick_msg = ("command must be in format: /NICK <nickname> ... ")
                     else:
-                        sock.send(("NICK MESSAGE : %s " % (second_word)).encode())
-                        # TO-DO: save nickname changes and display on server 
+                        # get user socket
+                        sock_id = sock.getpeername()[1]
+                        # update nicknames to include users nickname
+                        nicknames.update({ sock_id : second_word })
+                        nick_msg = ("Nickname set as : %s " % (second_word))
+                    # send message back to client and break
+                    sock.send(nick_msg.encode())
                     break
+
+                # adding users nickname to outgoing message
+                for key, val in nicknames.items():
+                    if key == sock.getpeername()[1]:
+                        if(val is not None):
+                            msg = str(val + ": " + msg)
 
                 # send the message to all connected clients except the sender
                 for res_soc in socket_list:
-                	if(res_soc != socket_list[0] and res_soc != sock):
-                		res_soc.send(msg.encode())
-                
-
+                    if(res_soc != socket_list[0] and res_soc != sock):
+                        res_soc.send(msg.encode())
 
 # main method starts running the server
 if __name__ == '__main__':
